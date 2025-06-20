@@ -206,8 +206,10 @@ def run_search_by_reference():
             cap.release()
             if hit_times:
                 ws.append([fname, ", ".join(hit_times)])
-            update_status(f"{fname} 검색 완료 ({idx+1}/{len(video_files)})")
-            progress_var.set((idx+1)/len(video_files)*100)
+            progress_ratio = (idx + 1) / len(video_files)
+            progress_percent = int(progress_ratio * 100)
+            update_status(f"[{idx+1}/{len(video_files)}] '{fname}' 검색 중... 진행률: {progress_percent}%")
+            progress_var.set(progress_percent)
             progress_bar.update()
         save_path = os.path.join(video_dir, f"search_result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx")
         wb.save(save_path)
