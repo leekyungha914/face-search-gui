@@ -6,7 +6,8 @@ import cv2
 import numpy as np
 import os
 import threading
-from sklearn.cluster import DBSCAN
+#from sklearn.cluster import DBSCAN
+import hdbscan
 from PIL import Image, ImageTk
 from datetime import datetime
 from openpyxl import Workbook
@@ -104,8 +105,10 @@ def process_video(video_path, eps=0.4, min_samples=3, frame_sample_rate=5, start
         messagebox.showerror("오류", "얼굴을 인식하지 못했습니다.")
         return None
 
-    clustering = DBSCAN(eps=eps, min_samples=min_samples)
-    labels = clustering.fit_predict(face_encodings)
+    #clustering = DBSCAN(eps=eps, min_samples=min_samples)
+    #labels = clustering.fit_predict(face_encodings)
+    clusterer = hdbscan.HDBSCAN(min_cluster_size=min_samples, min_samples=min_samples, metric='euclidean')
+    labels = clusterer.fit_predict(face_encodings)
     clustered = {}
     for idx, label in enumerate(labels):
         if label == -1:
