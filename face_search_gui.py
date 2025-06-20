@@ -19,7 +19,7 @@ def is_valid_face(face_crop):
         return False
     gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)
     laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    return laplacian_var >= 30
+    return laplacian_var >= 50  # 기존은 30
 
 # 탐지기 선택
 def detect_faces_custom(image, detector_mode):
@@ -39,7 +39,7 @@ def detect_faces_custom(image, detector_mode):
                 face_locations.append((top, right, bottom, left))
     else:
         face_locations = []
-    encodings = face_recognition.face_encodings(image, face_locations)
+    encodings = face_recognition.face_encodings(image, face_locations, num_jitters=5, model="large")
     return face_locations, encodings
 
 # 상태/디버그 메시지 출력
@@ -49,8 +49,16 @@ def update_status(msg):
     log_text.insert(tk.END, msg + "\n")
     log_text.see(tk.END)
 
+def save_clustered_faces_debug(debug_dir, clustered_faces):
+    for label, faces in clustered_faces.items():
+        cluster_dir = os.path.join(debug_dir, f"cluster_{label}")
+        os.makedirs(cluster_dir, exist_ok=True)
+        for idx, (_, thumb_img) in enumerate(faces):
+            save_path = os.path.join(cluster_dir, f"face_{idx + 1}.jpg")
+            thumb_img.save(save_path)
+
 # 기준 인물 추출
-def process_video(video_path, eps=0.5, min_samples=3, frame_sample_rate=5, start_sec=0, end_sec=None):
+def process_video(video_path, eps=0.4, min_samples=3, frame_sample_rate=5, start_sec=0, end_sec=None):
     video = cv2.VideoCapture(video_path)
     fps = video.get(cv2.CAP_PROP_FPS)
     total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -105,6 +113,8 @@ def process_video(video_path, eps=0.5, min_samples=3, frame_sample_rate=5, start
         clustered.setdefault(label, []).append((face_encodings[idx], thumbnails[idx]))
     unique_labels = set(labels)
     update_status(f"[DEBUG] 클러스터 개수: {len(unique_labels) - (1 if -1 in unique_labels else 0)}")
+    # 🆕 인물별 폴더 저장
+    save_clustered_faces_debug(debug_dir, clustered)
     return clustered
 
 # 대표 얼굴 선택
@@ -241,7 +251,7 @@ cluster_frame = tk.Frame(root)
 cluster_frame.pack(pady=5)
 tk.Label(cluster_frame, text="DBSCAN eps:").pack(side="left")
 eps_entry = tk.Entry(cluster_frame, width=5)
-eps_entry.insert(0, "0.5")
+eps_entry.insert(0, "0.4")
 eps_entry.pack(side="left")
 tk.Label(cluster_frame, text="min_samples:").pack(side="left")
 min_samples_entry = tk.Entry(cluster_frame, width=5)
