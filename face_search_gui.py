@@ -183,12 +183,18 @@ def run_search_by_reference():
     def task():
         video_files = [f for f in os.listdir(video_dir) if f.endswith(".mp4")]
         for idx, fname in enumerate(video_files):
+            update_status(f"🔍 {idx+1}/{len(video_files)}: {fname} 검색 시작")
+            progress_var.set((idx / len(video_files)) * 100)
+            progress_bar.update()
+
             fpath = os.path.join(video_dir, fname)
             cap = cv2.VideoCapture(fpath)
             fps = cap.get(cv2.CAP_PROP_FPS)
             total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
             current_frame = 0
             hit_times = []
+            matched = False
+
             while current_frame < total_frames:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame)
                 ret, frame = cap.read()
@@ -201,11 +207,20 @@ def run_search_by_reference():
                     if dist < threshold:
                         sec = current_frame / fps
                         hit_times.append(f"{int(sec//60):02}:{int(sec%60):02}")
+                        matched = True
                         break
                 current_frame += frame_gap
+                
             cap.release()
             if hit_times:
                 ws.append([fname, ", ".join(hit_times)])
+
+             # 결과 메시지
+            if matched:
+                update_status(f"✅ {idx+1}/{len(video_files)}: {fname} ▶ 발견 ({', '.join(hit_times)})")
+            else:
+                update_status(f"⏭️ {idx+1}/{len(video_files)}: {fname} ▶ 패스")
+    
             progress_ratio = (idx + 1) / len(video_files)
             progress_percent = int(progress_ratio * 100)
             update_status(f"[{idx+1}/{len(video_files)}] '{fname}' 검색 중... 진행률: {progress_percent}%")
