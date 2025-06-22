@@ -16,11 +16,11 @@ import face_recognition
 # 얼굴 품질 확인
 def is_valid_face(face_crop):
     h, w = face_crop.shape[:2]
-    if h < 60 or w < 60:
+    if h < 100 or w < 100:
         return False
     gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)
     laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    return laplacian_var >= 50  # 기존은 30
+    return laplacian_var >= 40  # 기존은 30
 
 # 탐지기 선택
 def detect_faces_custom(image, detector_mode):
