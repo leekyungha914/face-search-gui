@@ -16,11 +16,11 @@ import face_recognition
 # 얼굴 품질 확인
 def is_valid_face(face_crop):
     h, w = face_crop.shape[:2]
-    if h < 100 or w < 100:
+    if h < 120 or w < 120:
         return False
     gray = cv2.cvtColor(face_crop, cv2.COLOR_BGR2GRAY)
     laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
-    return laplacian_var >= 40  # 기존은 30
+    return laplacian_var >= 60  # 기존은 30
 
 # 탐지기 선택
 def detect_faces_custom(image, detector_mode):
@@ -206,6 +206,17 @@ def run_search_by_reference():
                 for enc in encs:
                     dist = np.linalg.norm(reference_encoding - enc)
                     if dist < threshold:
+                        # 💾 distance 포함 디버깅 저장
+                        debug_dir = os.path.join(video_dir, "debug_detected", fname.split(".")[0])
+                        os.makedirs(debug_dir, exist_ok=True)
+
+                        match_index = encs.index(enc)
+                        top, right, bottom, left = locs[match_index]
+                        matched_face = frame[top:bottom, left:right]
+
+                        save_path = os.path.join(debug_dir, f"frame{current_frame}_dist{dist:.3f}.jpg")
+                        cv2.imwrite(save_path, matched_face)
+                        # 💾 끝
                         sec = current_frame / fps
                         hit_times.append(f"{int(sec//60):02}:{int(sec%60):02}")
                         matched = True
@@ -264,7 +275,7 @@ search_frame_rate_entry.insert(0, "5")
 search_frame_rate_entry.pack(side="left")
 tk.Label(param_frame, text="매칭 임계값:").pack(side="left")
 match_threshold_entry = tk.Entry(param_frame, width=5)
-match_threshold_entry.insert(0, "0.45")
+match_threshold_entry.insert(0, "0.38")
 match_threshold_entry.pack(side="left")
 
 # DBSCAN 설정
