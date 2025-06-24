@@ -200,6 +200,7 @@ def run_search_by_reference():
                 ret, frame = cap.read()
                 if not ret:
                     break
+                update_status(f"{fname}: {current_frame}/{total_frames} 프레임 진행 중")
                 rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 locs, encs = detect_faces_custom(rgb, detector_var.get())
                 for enc in encs:
